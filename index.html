@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Urban Air Quality &amp; Mobility Dashboard</title>
+
+  <!-- ============================================================
+       Tailwind CSS CDN
+  ============================================================ -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Konfigurasi tema kustom Tailwind: warna & font brand -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            /* Warna utama */
+            charcoal:          '#1F2933',
+            'charcoal-800':    '#323F4B',
+            'charcoal-700':    '#3E4C59',
+            'charcoal-600':    '#52606D',
+            /* Warna aksen */
+            terracotta:        '#D95D39',
+            'terracotta-dark': '#B84A2A',
+            'terracotta-pale': '#FDF0EC',
+          },
+          fontFamily: {
+            sans: ['"Inter"', 'system-ui', 'sans-serif'],
+          },
+          /* Lebar sidebar tetap */
+          width: { sidebar: '256px' },
+          spacing: { sidebar: '256px' },
+        },
+      },
+    };
+  </script>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Styling tambahan (animasi, state aktif, scrollbar, dll.) -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body class="bg-gray-50 text-charcoal font-sans antialiased">
+
+  <!-- ============================================================
+       SIDEBAR — Navigasi panel kiri (desktop tetap, mobile drawer)
+       data-panel pada setiap nav-item menentukan panel mana yang
+       akan ditampilkan di area konten utama.
+  ============================================================ -->
+  <aside
+    id="sidebar"
+    role="navigation"
+    aria-label="Navigasi dashboard"
+    class="sidebar-panel fixed inset-y-0 left-0 z-40 w-sidebar bg-charcoal flex flex-col"
+  >
+
+    <!-- -- Brand / Logo -- -->
+    <div class="flex items-center gap-3 px-6 py-5 border-b border-charcoal-700">
+      <!-- Ikon logo inline SVG -->
+      <span class="w-9 h-9 rounded-xl bg-terracotta flex items-center justify-center flex-shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253" />
+        </svg>
+      </span>
+      <div class="min-w-0">
+        <p class="text-white font-bold text-base leading-tight truncate">AirMob<span class="text-terracotta">IQ</span></p>
+        <p class="text-charcoal-600 text-xs mt-0.5">v3.1 · Jakarta</p>
+      </div>
+    </div>
+
+    <!-- -- Menu Navigasi Utama -- -->
+    <nav class="flex-1 overflow-y-auto py-4 px-3" aria-label="Menu utama">
+      <ul id="sidebar-nav-list" class="space-y-1">
+
+        <!-- Item: Ringkasan -->
+        <li>
+          <button
+            class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200"
+            data-panel="ringkasan"
+            aria-current="page"
+          >
+            <span class="nav-item__icon w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-200">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+                   viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+              </svg>
+            </span>
+            <span class="nav-item__label text-sm font-medium leading-none">Ringkasan</span>
+          </button>
+        </li>
+
+        <!-- Item: Kualitas Udara -->
+        <li>
+          <button
+            class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200"
+            data-panel="kualitas-udara"
+          >
+            <span class="nav-item__icon w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-200">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+                   viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" />
+              </svg>
+            </span>
+            <span class="nav-item__label text-sm font-medium leading-none">Kualitas Udara</span>
+          </button>
+        </li>
+
+        <!-- Item: Mobilitas Kota -->
+        <li>
+          <button
+            class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200"
+            data-panel="mobilitas"
+          >
+            <span class="nav-item__icon w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-200">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+                   viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+              </svg>
+            </span>
+            <span class="nav-item__label text-sm font-medium leading-none">Mobilitas Kota</span>
+          </button>
+        </li>
+
+        <!-- Divider -->
+        <li class="pt-3 pb-1 px-3">
+          <span class="text-charcoal-600 text-xs font-semibold uppercase tracking-wider">Sistem</span>
+        </li>
+
+        <!-- Item: Pengaturan -->
+        <li>
+          <button
+            class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200"
+            data-panel="pengaturan"
+          >
+            <span class="nav-item__icon w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-200">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+                   viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </span>
+            <span class="nav-item__label text-sm font-medium leading-none">Pengaturan</span>
+          </button>
+        </li>
+
+      </ul>
+    </nav>
+
+    <!-- -- Status Sensor & Profil Singkat -- -->
+    <div class="border-t border-charcoal-700 px-4 py-4 space-y-3">
+      <!-- Indikator sensor aktif -->
+      <div class="flex items-center gap-2">
+        <span class="sensor-dot w-2 h-2 rounded-full bg-terracotta flex-shrink-0"></span>
+        <span class="text-charcoal-600 text-xs">142 sensor aktif</span>
+      </div>
+      <!-- Profil singkat operator -->
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-terracotta text-white text-xs font-bold flex items-center justify-center flex-shrink-0">AW</div>
+        <div class="min-w-0">
+          <p class="text-white text-xs font-semibold truncate">Andi Wibowo</p>
+          <p class="text-charcoal-600 text-xs truncate">Ops Manager</p>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+
+  <!-- ============================================================
+       OVERLAY — Latar gelap saat menu mobile terbuka
+  ============================================================ -->
+  <div
+    id="sidebar-overlay"
+    class="sidebar-overlay fixed inset-0 z-30 bg-black/50 backdrop-blur-sm hidden"
+    aria-hidden="true"
+  ></div>
+
+
+  <!-- ============================================================
+       MAIN WRAPPER — Konten utama di kanan sidebar
+  ============================================================ -->
+  <div class="main-layout min-h-screen flex flex-col">
+
+    <!-- ==========================================================
+         TOP NAVIGATION BAR
+         Sticky header: hamburger (mobile), breadcrumb, aksi.
+    ========================================================== -->
+    <header
+      id="topnav"
+      class="sticky top-0 z-20 h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6 gap-4"
+    >
+
+      <!-- Kiri: Hamburger (mobile) + Judul Halaman -->
+      <div class="flex items-center gap-3 min-w-0">
+
+        <!-- Tombol hamburger — hanya tampil di mobile (<md) -->
+        <button
+          id="sidebar-toggle"
+          type="button"
+          aria-label="Buka navigasi"
+          aria-expanded="false"
+          aria-controls="sidebar"
+          class="md:hidden w-9 h-9 rounded-lg flex items-center justify-center text-charcoal-600 hover:bg-gray-100 hover:text-charcoal transition-colors duration-200 flex-shrink-0"
+        >
+          <!-- Ikon hamburger -->
+          <svg id="topnav-icon-open" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5"
+               fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6h16.5M3.75 12h16.5M3.75 18h16.5" />
+          </svg>
+          <!-- Ikon close (tersembunyi saat sidebar tutup) -->
+          <svg id="topnav-icon-close" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 hidden"
+               fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <!-- Judul halaman aktif (diperbarui oleh JS) -->
+        <div class="min-w-0">
+          <h1 id="page-title" class="text-base font-bold text-charcoal leading-tight truncate">Ringkasan</h1>
+          <!-- Subtitle diperbarui JS saat panel berpindah -->
+          <p id="page-subtitle" class="text-xs text-gray-400 mt-0.5 hidden sm:block">Urban Air Quality &amp; Mobility · Jakarta</p>
+        </div>
+      </div>
+
+      <!-- Kanan: Aksi top nav -->
+      <div class="flex items-center gap-2 flex-shrink-0">
+
+        <!-- Tombol Refresh — id dipakai JS untuk animasi spin & update timestamp -->
+        <button
+          id="btn-refresh"
+          type="button"
+          aria-label="Refresh data"
+          class="w-9 h-9 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-charcoal transition-colors duration-200"
+        >
+          <svg id="icon-refresh" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+          </svg>
+        </button>
+
+        <!-- Wrapper posisi-relatif agar panel notifikasi bisa absolute -->
+        <div class="relative">
+
+          <!-- Tombol Notifikasi — id dipakai JS untuk toggle panel & clear badge -->
+          <button
+            id="btn-notifikasi"
+            type="button"
+            aria-label="Notifikasi — 3 belum dibaca"
+            aria-expanded="false"
+            aria-controls="notif-panel"
+            class="relative w-9 h-9 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-charcoal transition-colors duration-200"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+                 viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+            </svg>
+            <!-- Badge jumlah notifikasi — disembunyikan JS saat panel dibuka -->
+            <span
+              id="notif-badge"
+              class="absolute top-1 right-1 w-4 h-4 bg-terracotta rounded-full text-white text-[10px] font-bold flex items-center justify-center leading-none"
+            >3</span>
+          </button>
+
+          <!-- Panel dropdown notifikasi ringkas (tersembunyi secara default) -->
+          <div
+            id="notif-panel"
+            class="notif-dropdown hidden"
+            role="dialog"
+            aria-label="Notifikasi terkini"
+          >
+            <!-- Header panel -->
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+              <span class="text-xs font-bold text-charcoal">Notifikasi</span>
+              <span id="notif-unread-label" class="text-xs text-terracotta font-semibold">3 belum dibaca</span>
+            </div>
+            <!-- Daftar notifikasi ringkas -->
+            <ul class="py-1">
+              <li class="notif-dropdown__item notif-dropdown__item--unread">
+                <span class="notif-dropdown__dot notif-dropdown__dot--critical"></span>
+                <div class="min-w-0">
+                  <p class="text-xs font-semibold text-gray-800 truncate">PM2.5 Melonjak — Jakarta Utara</p>
+                  <p class="text-xs text-gray-500">12 mnt lalu</p>
+                </div>
+              </li>
+              <li class="notif-dropdown__item notif-dropdown__item--unread">
+                <span class="notif-dropdown__dot notif-dropdown__dot--high"></span>
+                <div class="min-w-0">
+                  <p class="text-xs font-semibold text-gray-800 truncate">NO₂ Tinggi — Jl. Sudirman</p>
+                  <p class="text-xs text-gray-500">35 mnt lalu</p>
+                </div>
+              </li>
+              <li class="notif-dropdown__item notif-dropdown__item--unread">
+                <span class="notif-dropdown__dot notif-dropdown__dot--moderate"></span>
+                <div class="min-w-0">
+                  <p class="text-xs font-semibold text-gray-800 truncate">Kabut Asap — Pulo Gadung</p>
+                  <p class="text-xs text-gray-500">1 jam lalu</p>
+                </div>
+              </li>
+            </ul>
+            <!-- Footer panel -->
+            <div class="px-4 py-2.5 border-t border-gray-100">
+              <button
+                id="notif-mark-read"
+                class="text-xs font-semibold text-terracotta hover:text-terracotta-dark transition-colors duration-150"
+              >Tandai semua sudah dibaca</button>
+            </div>
+          </div>
+
+        </div><!-- /wrapper notifikasi -->
+
+        <!-- Divider -->
+        <span class="hidden sm:block w-px h-6 bg-gray-200 mx-1"></span>
+
+        <!-- Avatar operator (klik membuka panel pengaturan) -->
+        <button
+          type="button"
+          data-panel="pengaturan"
+          aria-label="Profil — Andi Wibowo"
+          class="nav-item flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+        >
+          <div class="w-7 h-7 rounded-full bg-charcoal text-white text-xs font-bold flex items-center justify-center flex-shrink-0">AW</div>
+          <span class="hidden sm:block text-sm font-medium text-charcoal">Andi W.</span>
+        </button>
+
+      </div>
+    </header>
+
+
+    <!-- ==========================================================
+         MAIN CONTENT — Area panel halaman (dikelola JS)
+    ========================================================== -->
+    <main id="main-content" class="flex-1 p-4 md:p-6 lg:p-8">
+
+
+      <!-- --------------------------------------------------------
+           PANEL: RINGKASAN
+           Panel default yang tampil saat pertama kali dimuat.
+      -------------------------------------------------------- -->
+      <section
+        id="panel-ringkasan"
+        class="content-panel"
+        aria-labelledby="panel-ringkasan-title"
+      >
+        <!-- Header Panel -->
+        <div class="mb-5">
+          <h2 id="panel-ringkasan-title" class="text-xl font-bold text-charcoal">Ringkasan Dashboard</h2>
+          <p class="text-sm text-gray-500 mt-1">Pembaruan terakhir: 22 November 2026, 12:06 WIB</p>
+        </div>
+
+        <!-- ======================================================
+             TAB FILTER KATEGORI
+             Tiga tab: Semua / Aktif / Perlu Perhatian.
+             Jumlah item ditampilkan langsung di dalam tab.
+             JS menghitung count dari data DOM dan merender angkanya
+             ke dalam elemen .filter-tab__count masing-masing tab.
+        ====================================================== -->
+        <div
+          id="category-filter"
+          class="flex items-center gap-1 mb-6 border-b border-gray-200"
+          role="tablist"
+          aria-label="Filter kategori ringkasan"
+        >
+          <!-- Tab: Semua -->
+          <button
+            id="tab-semua"
+            class="filter-tab filter-tab--active"
+            role="tab"
+            aria-selected="true"
+            aria-controls="panel-ringkasan"
+            data-filter="semua"
+          >
+            Semua
+            <span id="count-semua" class="filter-tab__count">0</span>
+          </button>
+
+          <!-- Tab: Aktif -->
+          <button
+            id="tab-aktif"
+            class="filter-tab"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-ringkasan"
+            data-filter="aktif"
+          >
+            Aktif
+            <span id="count-aktif" class="filter-tab__count">0</span>
+          </button>
+
+          <!-- Tab: Perlu Perhatian -->
+          <button
+            id="tab-perhatian"
+            class="filter-tab"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-ringkasan"
+            data-filter="perhatian"
+          >
+            Perlu Perhatian
+            <span id="count-perhatian" class="filter-tab__count filter-tab__count--alert">0</span>
+          </button>
+        </div>
+
+        <!-- Grid KPI Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+          <!-- KPI: AQI -->
+          <div class="dash-card p-4">
+            <div class="flex items-start justify-between mb-3">
+              <div class="w-10 h-10 rounded-xl bg-terracotta-pale flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-terracotta" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" />
+                </svg>
+              </div>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">Baik</span>
+            </div>
+            <p class="text-2xl font-extrabold text-charcoal leading-none mb-1">42</p>
+            <p class="text-xs text-gray-500 font-medium">Indeks AQI</p>
+            <!-- Progress bar mini -->
+            <div class="mt-3 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div class="h-full bg-green-500 rounded-full" style="width:8.4%"></div>
+            </div>
+          </div>
+
+          <!-- KPI: PM2.5 -->
+          <div class="dash-card p-4">
+            <div class="flex items-start justify-between mb-3">
+              <div class="w-10 h-10 rounded-xl bg-terracotta-pale flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-terracotta" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21a48.25 48.25 0 01-8.135-.687c-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+                </svg>
+              </div>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Moderat</span>
+            </div>
+            <p class="text-2xl font-extrabold text-charcoal leading-none mb-1">9.8 <span class="text-sm font-normal text-gray-400">µg/m³</span></p>
+            <p class="text-xs text-gray-500 font-medium">Partikulat PM2.5</p>
+            <div class="mt-3 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div class="h-full bg-amber-400 rounded-full" style="width:65%"></div>
+            </div>
+          </div>
+
+          <!-- KPI: Kemacetan -->
+          <div class="dash-card p-4">
+            <div class="flex items-start justify-between mb-3">
+              <div class="w-10 h-10 rounded-xl bg-terracotta-pale flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-terracotta" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+                </svg>
+              </div>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">Rendah</span>
+            </div>
+            <p class="text-2xl font-extrabold text-charcoal leading-none mb-1">28 <span class="text-sm font-normal text-gray-400">%</span></p>
+            <p class="text-xs text-gray-500 font-medium">Kemacetan Kota</p>
+            <div class="mt-3 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div class="h-full bg-green-500 rounded-full" style="width:28%"></div>
+            </div>
+          </div>
+
+          <!-- KPI: Armada EV -->
+          <div class="dash-card p-4">
+            <div class="flex items-start justify-between mb-3">
+              <div class="w-10 h-10 rounded-xl bg-terracotta-pale flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-terracotta" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                </svg>
+              </div>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">Aktif</span>
+            </div>
+            <p class="text-2xl font-extrabold text-charcoal leading-none mb-1">64 <span class="text-sm font-normal text-gray-400">%</span></p>
+            <p class="text-xs text-gray-500 font-medium">Armada EV Aktif</p>
+            <div class="mt-3 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div class="h-full bg-purple-500 rounded-full" style="width:64%"></div>
+            </div>
+          </div>
+
+        </div><!-- /KPI Grid -->
+
+        <!-- Dua panel berdampingan: Notifikasi + Target -->
+        <div class="grid md:grid-cols-2 gap-4">
+
+          <!-- Panel: Peringatan Aktif -->
+          <div class="dash-card p-5">
+            <h3 class="text-sm font-bold text-charcoal mb-4 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-terracotta"></span>
+              Peringatan Aktif
+            </h3>
+            <ul class="space-y-3">
+              <li class="alert-row alert-row--critical">
+                <span class="alert-row__dot"></span>
+                <div class="min-w-0">
+                  <p class="text-xs font-semibold text-gray-800 truncate">PM2.5 Melonjak — Jakarta Utara</p>
+                  <p class="text-xs text-gray-500">98 µg/m³ · 12 mnt lalu</p>
+                </div>
+                <span class="alert-badge alert-badge--critical">KRITIS</span>
+              </li>
+              <li class="alert-row alert-row--high">
+                <span class="alert-row__dot"></span>
+                <div class="min-w-0">
+                  <p class="text-xs font-semibold text-gray-800 truncate">NO₂ Tinggi — Jl. Sudirman</p>
+                  <p class="text-xs text-gray-500">180 µg/m³ · 35 mnt lalu</p>
+                </div>
+                <span class="alert-badge alert-badge--high">TINGGI</span>
+              </li>
+              <li class="alert-row alert-row--moderate">
+                <span class="alert-row__dot"></span>
+                <div class="min-w-0">
+                  <p class="text-xs font-semibold text-gray-800 truncate">Kabut Asap — Pulo Gadung</p>
+                  <p class="text-xs text-gray-500">Visibilitas −40% · 1 jam lalu</p>
+                </div>
+                <span class="alert-badge alert-badge--moderate">SEDANG</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Panel: Target Emisi 2030 -->
+          <div class="dash-card p-5">
+            <h3 class="text-sm font-bold text-charcoal mb-4 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-terracotta"></span>
+              Target Emisi 2030
+            </h3>
+            <ul class="space-y-4">
+              <li>
+                <div class="flex justify-between items-baseline mb-1.5">
+                  <span class="text-xs font-medium text-gray-700">Reduksi Emisi CO₂</span>
+                  <span class="text-xs font-bold text-green-600">62%</span>
+                </div>
+                <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div class="h-full bg-green-500 rounded-full" style="width:62%"></div>
+                </div>
+              </li>
+              <li>
+                <div class="flex justify-between items-baseline mb-1.5">
+                  <span class="text-xs font-medium text-gray-700">Konversi Bus ke EV</span>
+                  <span class="text-xs font-bold text-amber-600">48%</span>
+                </div>
+                <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div class="h-full bg-amber-400 rounded-full" style="width:48%"></div>
+                </div>
+              </li>
+              <li>
+                <div class="flex justify-between items-baseline mb-1.5">
+                  <span class="text-xs font-medium text-gray-700">Stasiun Pengisian EV</span>
+                  <span class="text-xs font-bold text-red-600">33%</span>
+                </div>
+                <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div class="h-full bg-red-400 rounded-full" style="width:33%"></div>
+                </div>
+              </li>
+              <li>
+                <div class="flex justify-between items-baseline mb-1.5">
+                  <span class="text-xs font-medium text-gray-700">Jalur Sepeda</span>
+                  <span class="text-xs font-bold text-green-600">71%</span>
+                </div>
+                <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div class="h-full bg-green-500 rounded-full" style="width:71%"></div>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+        </div>
+      </section>
+
+
+      <!-- --------------------------------------------------------
+           PANEL: KUALITAS UDARA (tersembunyi saat awal)
+      -------------------------------------------------------- -->
+      <section
+        id="panel-kualitas-udara"
+        class="content-panel hidden"
+        aria-labelledby="panel-kualitas-title"
+      >
+        <!-- Header panel -->
+        <div class="mb-6">
+          <h2 id="panel-kualitas-title" class="text-xl font-bold text-charcoal">Kualitas Udara</h2>
+          <p class="text-sm text-gray-500 mt-1">Pemantauan real-time 142 sensor · Jakarta Raya</p>
+        </div>
+
+        <!-- Grid ringkasan zona AQI (tidak berubah) -->
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <div class="dash-card p-4 border-l-4 border-green-500">
+            <p class="text-xs text-gray-500 mb-1">Jakarta Selatan</p>
+            <p class="text-3xl font-extrabold text-charcoal">38 <span class="text-sm font-normal text-gray-400">AQI</span></p>
+            <p class="text-xs font-semibold text-green-600 mt-1">● Baik</p>
+          </div>
+          <div class="dash-card p-4 border-l-4 border-green-500">
+            <p class="text-xs text-gray-500 mb-1">Jakarta Barat</p>
+            <p class="text-3xl font-extrabold text-charcoal">44 <span class="text-sm font-normal text-gray-400">AQI</span></p>
+            <p class="text-xs font-semibold text-green-600 mt-1">● Baik</p>
+          </div>
+          <div class="dash-card p-4 border-l-4 border-amber-400">
+            <p class="text-xs text-gray-500 mb-1">Jakarta Pusat</p>
+            <p class="text-3xl font-extrabold text-charcoal">72 <span class="text-sm font-normal text-gray-400">AQI</span></p>
+            <p class="text-xs font-semibold text-amber-600 mt-1">● Moderat</p>
+          </div>
+          <div class="dash-card p-4 border-l-4 border-amber-400">
+            <p class="text-xs text-gray-500 mb-1">Jakarta Timur</p>
+            <p class="text-3xl font-extrabold text-charcoal">65 <span class="text-sm font-normal text-gray-400">AQI</span></p>
+            <p class="text-xs font-semibold text-amber-600 mt-1">● Moderat</p>
+          </div>
+          <div class="dash-card p-4 border-l-4 border-red-500">
+            <p class="text-xs text-gray-500 mb-1">Jakarta Utara</p>
+            <p class="text-3xl font-extrabold text-charcoal">108 <span class="text-sm font-normal text-gray-400">AQI</span></p>
+            <p class="text-xs font-semibold text-red-600 mt-1">● Tidak Sehat</p>
+          </div>
+          <div class="dash-card p-4 border-l-4 border-green-500">
+            <p class="text-xs text-gray-500 mb-1">Kepulauan Seribu</p>
+            <p class="text-3xl font-extrabold text-charcoal">22 <span class="text-sm font-normal text-gray-400">AQI</span></p>
+            <p class="text-xs font-semibold text-green-600 mt-1">● Baik</p>
+          </div>
+        </div>
+
+        <!-- Parameter Polutan Utama (tidak berubah) -->
+        <div class="dash-card p-5 mb-6">
+          <h3 class="text-sm font-bold text-charcoal mb-4">Parameter Polutan Utama</h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="text-center">
+              <p class="text-2xl font-extrabold text-charcoal">9.8</p>
+              <p class="text-xs text-gray-500 mt-0.5">PM2.5 (µg/m³)</p>
+            </div>
+            <div class="text-center">
+              <p class="text-2xl font-extrabold text-charcoal">18.4</p>
+              <p class="text-xs text-gray-500 mt-0.5">PM10 (µg/m³)</p>
+            </div>
+            <div class="text-center">
+              <p class="text-2xl font-extrabold text-charcoal">0.04</p>
+              <p class="text-xs text-gray-500 mt-0.5">NO₂ (ppm)</p>
+            </div>
+            <div class="text-center">
+              <p class="text-2xl font-extrabold text-charcoal">0.02</p>
+              <p class="text-xs text-gray-500 mt-0.5">SO₂ (ppm)</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ======================================================
+             TABEL PEMANTAUAN STASIUN — dengan filter tab + search
+        ====================================================== -->
+        <div class="dash-card overflow-hidden">
+
+          <!-- Toolbar: judul + search + filter tab -->
+          <div class="px-5 pt-5 pb-4 border-b border-gray-100">
+
+            <!-- Baris atas: judul & search -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div>
+                <h3 class="text-sm font-bold text-charcoal">Daftar Stasiun Pemantauan</h3>
+                <p class="text-xs text-gray-500 mt-0.5">
+                  Menampilkan <span id="station-count">12</span> dari 12 stasiun
+                </p>
+              </div>
+
+              <!-- Search input -->
+              <label class="station-search-wrap" aria-label="Cari stasiun atau wilayah">
+                <svg xmlns="http://www.w3.org/2000/svg" class="station-search-icon" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+                <input
+                  id="station-search"
+                  type="search"
+                  placeholder="Cari nama stasiun atau wilayah…"
+                  class="station-search-input"
+                  autocomplete="off"
+                />
+              </label>
+            </div>
+
+            <!-- Filter tab status -->
+            <div
+              id="station-filter-tabs"
+              class="flex items-center gap-1 flex-wrap"
+              role="tablist"
+              aria-label="Filter status AQI"
+            >
+              <button class="station-tab station-tab--active" data-status="semua" role="tab" aria-selected="true">
+                Semua <span class="station-tab__count" id="stab-count-semua">12</span>
+              </button>
+              <button class="station-tab" data-status="baik" role="tab" aria-selected="false">
+                Baik <span class="station-tab__count" id="stab-count-baik">0</span>
+              </button>
+              <button class="station-tab" data-status="moderat" role="tab" aria-selected="false">
+                Moderat <span class="station-tab__count" id="stab-count-moderat">0</span>
+              </button>
+              <button class="station-tab" data-status="tidak-sehat" role="tab" aria-selected="false">
+                Tidak Sehat <span class="station-tab__count" id="stab-count-tidak-sehat">0</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Tabel data stasiun -->
+          <div class="overflow-x-auto">
+            <table class="station-table" aria-label="Tabel stasiun pemantauan kualitas udara">
+              <thead>
+                <tr>
+                  <th scope="col">Nama Stasiun</th>
+                  <th scope="col">Wilayah</th>
+                  <th scope="col" class="text-right">AQI</th>
+                  <th scope="col" class="text-right">PM2.5 (µg/m³)</th>
+                  <th scope="col" class="text-right">PM10 (µg/m³)</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <!-- tbody diisi oleh JavaScript -->
+              <tbody id="station-tbody"></tbody>
+            </table>
+          </div>
+
+          <!-- Pesan kosong (ditampilkan JS jika tidak ada hasil) -->
+          <div id="station-empty" class="station-empty hidden" aria-live="polite">
+            <svg xmlns="http://www.w3.org/2000/svg" class="station-empty__icon" fill="none"
+                 viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" />
+            </svg>
+            <p class="station-empty__title">Tidak ada stasiun ditemukan</p>
+            <p class="station-empty__desc" id="station-empty-desc">
+              Coba ubah kata kunci pencarian atau pilih kategori lain.
+            </p>
+          </div>
+
+        </div><!-- /dash-card tabel -->
+
+      </section>
+
+
+      <!-- --------------------------------------------------------
+           PANEL: MOBILITAS KOTA (tersembunyi saat awal)
+      -------------------------------------------------------- -->
+      <section
+        id="panel-mobilitas"
+        class="content-panel hidden"
+        aria-labelledby="panel-mobilitas-title"
+      >
+        <div class="mb-6">
+          <h2 id="panel-mobilitas-title" class="text-xl font-bold text-charcoal">Mobilitas Kota</h2>
+          <p class="text-sm text-gray-500 mt-1">Data lalu lintas &amp; armada kendaraan listrik real-time</p>
+        </div>
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <div class="dash-card p-5 col-span-full lg:col-span-1">
+            <p class="text-xs text-gray-500 mb-2">Tingkat Kemacetan Kota</p>
+            <p class="text-5xl font-extrabold text-charcoal leading-none">28<span class="text-xl text-gray-400 font-normal">%</span></p>
+            <p class="text-xs text-green-600 font-semibold mt-2">↓ 6% dari kemarin</p>
+            <div class="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div class="h-full bg-green-500 rounded-full" style="width:28%"></div>
+            </div>
+          </div>
+          <div class="dash-card p-5">
+            <p class="text-xs text-gray-500 mb-2">Armada EV Aktif</p>
+            <p class="text-4xl font-extrabold text-charcoal leading-none">3.218</p>
+            <p class="text-xs text-gray-500 mt-1">dari 5.028 total armada</p>
+            <p class="text-xs text-purple-600 font-semibold mt-2">64% dari total</p>
+          </div>
+          <div class="dash-card p-5">
+            <p class="text-xs text-gray-500 mb-2">Stasiun Pengisian EV</p>
+            <p class="text-4xl font-extrabold text-charcoal leading-none">396</p>
+            <p class="text-xs text-gray-500 mt-1">dari 1.200 yang direncanakan</p>
+            <p class="text-xs text-amber-600 font-semibold mt-2">33% dari target</p>
+          </div>
+        </div>
+
+        <!-- Rute tersibuk -->
+        <div class="dash-card p-5">
+          <h3 class="text-sm font-bold text-charcoal mb-4">Koridor Tersibuk Hari Ini</h3>
+          <ul class="space-y-3">
+            <li class="flex items-center justify-between gap-3">
+              <span class="text-xs text-gray-700 font-medium min-w-0 truncate">Jl. Sudirman — Semanggi</span>
+              <div class="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden flex-shrink-0">
+                <div class="h-full bg-red-400 rounded-full" style="width:88%"></div>
+              </div>
+              <span class="text-xs font-bold text-red-600 w-8 text-right flex-shrink-0">88%</span>
+            </li>
+            <li class="flex items-center justify-between gap-3">
+              <span class="text-xs text-gray-700 font-medium min-w-0 truncate">Jl. Gatot Subroto</span>
+              <div class="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden flex-shrink-0">
+                <div class="h-full bg-amber-400 rounded-full" style="width:72%"></div>
+              </div>
+              <span class="text-xs font-bold text-amber-600 w-8 text-right flex-shrink-0">72%</span>
+            </li>
+            <li class="flex items-center justify-between gap-3">
+              <span class="text-xs text-gray-700 font-medium min-w-0 truncate">Jl. M.H. Thamrin</span>
+              <div class="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden flex-shrink-0">
+                <div class="h-full bg-amber-400 rounded-full" style="width:65%"></div>
+              </div>
+              <span class="text-xs font-bold text-amber-600 w-8 text-right flex-shrink-0">65%</span>
+            </li>
+            <li class="flex items-center justify-between gap-3">
+              <span class="text-xs text-gray-700 font-medium min-w-0 truncate">Jl. Casablanca</span>
+              <div class="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden flex-shrink-0">
+                <div class="h-full bg-green-400 rounded-full" style="width:41%"></div>
+              </div>
+              <span class="text-xs font-bold text-green-600 w-8 text-right flex-shrink-0">41%</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+
+      <!-- --------------------------------------------------------
+           PANEL: PENGATURAN (tersembunyi saat awal)
+      -------------------------------------------------------- -->
+      <section
+        id="panel-pengaturan"
+        class="content-panel hidden"
+        aria-labelledby="panel-pengaturan-title"
+      >
+        <div class="mb-6">
+          <h2 id="panel-pengaturan-title" class="text-xl font-bold text-charcoal">Pengaturan</h2>
+          <p class="text-sm text-gray-500 mt-1">Kelola konfigurasi sistem &amp; profil operator</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+
+          <!-- Profil Operator -->
+          <div class="dash-card p-5">
+            <h3 class="text-sm font-bold text-charcoal mb-4">Profil Operator</h3>
+            <div class="flex items-center gap-4 mb-4">
+              <div class="w-14 h-14 rounded-full bg-charcoal text-white text-lg font-bold flex items-center justify-center flex-shrink-0">AW</div>
+              <div>
+                <p class="font-bold text-charcoal">Andi Wibowo, M.T.</p>
+                <p class="text-xs text-terracotta font-medium">Urban Operations Manager</p>
+                <p class="text-xs text-gray-500 mt-0.5">Dinas LH DKI Jakarta</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 pt-4 border-t border-gray-100">
+              <div class="text-center">
+                <p class="text-lg font-extrabold text-charcoal">1.842</p>
+                <p class="text-xs text-gray-500">Sensor</p>
+              </div>
+              <div class="text-center">
+                <p class="text-lg font-extrabold text-charcoal">24</p>
+                <p class="text-xs text-gray-500">Zona</p>
+              </div>
+              <div class="text-center">
+                <p class="text-lg font-extrabold text-charcoal">317</p>
+                <p class="text-xs text-gray-500">Laporan</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preferensi Sistem -->
+          <div class="dash-card p-5">
+            <h3 class="text-sm font-bold text-charcoal mb-4">Preferensi Sistem</h3>
+            <ul class="space-y-4">
+              <li class="flex items-center justify-between gap-3">
+                <span class="text-sm text-gray-700">Notifikasi otomatis</span>
+                <span class="setting-badge setting-badge--on">Aktif</span>
+              </li>
+              <li class="flex items-center justify-between gap-3">
+                <span class="text-sm text-gray-700">Refresh interval</span>
+                <span class="setting-badge setting-badge--neutral">5 menit</span>
+              </li>
+              <li class="flex items-center justify-between gap-3">
+                <span class="text-sm text-gray-700">Ambang AQI kritis</span>
+                <span class="setting-badge setting-badge--neutral">150</span>
+              </li>
+              <li class="flex items-center justify-between gap-3">
+                <span class="text-sm text-gray-700">Ekspor otomatis</span>
+                <span class="setting-badge setting-badge--off">Nonaktif</span>
+              </li>
+            </ul>
+          </div>
+
+        </div>
+      </section>
+
+
+    </main><!-- /main-content -->
+
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-200 bg-white px-6 py-4 text-center text-xs text-gray-400">
+      © 2026 AirMobIQ · Urban Air Quality &amp; Mobility · Data: BMKG, Dinas LH DKI, OpenAQ
+    </footer>
+
+  </div><!-- /main-layout -->
+
+
+  <!-- Script utama -->
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,651 @@
+/*
+ * ================================================================
+ * Urban Air Quality & Mobility Dashboard — style.css
+ * Styling tambahan yang melengkapi Tailwind CSS.
+ *
+ * File ini hanya berisi hal yang TIDAK dapat dicapai murni
+ * dengan kelas utility Tailwind standar:
+ *   - Offset sidebar pada main layout (CSS custom property)
+ *   - Transisi sidebar mobile (transform + translate)
+ *   - State aktif nav item di sidebar
+ *   - Komponen alert row dan badge
+ *   - Komponen badge pengaturan
+ *   - Animasi dot sensor pulse
+ *   - Scrollbar kustom
+ * ================================================================
+ */
+
+
+/* ================================================================
+   1. CSS CUSTOM PROPERTIES
+   Token desain utama yang digunakan di komponen kustom.
+================================================================ */
+:root {
+  --sidebar-width:   256px;    /* Lebar sidebar tetap */
+  --topnav-height:   64px;     /* Tinggi top nav */
+  --color-charcoal:  #1F2933;
+  --color-terracotta: #D95D39;
+  --color-terracotta-dark: #B84A2A;
+  --transition-fast: 0.2s ease;
+  --transition-med:  0.3s ease;
+}
+
+
+/* ================================================================
+   2. LAYOUT — Main Wrapper
+   Pada desktop (md+): area konten digeser ke kanan sejauh
+   lebar sidebar. Pada mobile, sidebar menjadi drawer (overlay).
+================================================================ */
+
+/* Desktop: sisihkan ruang untuk sidebar yang fixed */
+@media (min-width: 768px) {
+  .main-layout {
+    margin-left: var(--sidebar-width);
+  }
+}
+
+/* Mobile: main-layout tidak butuh margin kiri (sidebar = drawer) */
+@media (max-width: 767px) {
+  .main-layout {
+    margin-left: 0;
+  }
+}
+
+
+/* ================================================================
+   3. SIDEBAR — Panel & Transisi Mobile Drawer
+   Desktop: sidebar selalu terlihat (fixed).
+   Mobile: sidebar tersembunyi di luar layar kiri, muncul saat
+   class `is-open` ditambahkan oleh JavaScript.
+================================================================ */
+.sidebar-panel {
+  /* Transisi slide horizontal */
+  transition: transform var(--transition-med);
+}
+
+/* Mobile: sembunyikan sidebar ke kiri layar */
+@media (max-width: 767px) {
+  .sidebar-panel {
+    transform: translateX(-100%);
+  }
+
+  /* Saat sidebar terbuka (class ditambah JS) */
+  .sidebar-panel.is-open {
+    transform: translateX(0);
+  }
+}
+
+/* Desktop: sidebar selalu tampil — paksa transform netral */
+@media (min-width: 768px) {
+  .sidebar-panel {
+    transform: translateX(0) !important;
+  }
+}
+
+
+/* ================================================================
+   4. SIDEBAR OVERLAY — Latar gelap saat drawer mobile terbuka
+================================================================ */
+.sidebar-overlay {
+  /* State tersembunyi: opacity 0 + pointer-events off */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-med);
+}
+
+/* State terlihat (ditambahkan JS bersamaan dengan is-open pada sidebar) */
+.sidebar-overlay.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+
+/* ================================================================
+   5. NAV ITEM — State default, hover, dan aktif
+   Semua tombol navigasi sidebar menggunakan class .nav-item.
+================================================================ */
+
+/* -- Default state ------------------------------------------- */
+.nav-item {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.nav-item .nav-item__icon {
+  background-color: transparent;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* -- Hover state --------------------------------------------- */
+.nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.nav-item:hover .nav-item__icon {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* -- Aktif state (class ditambah JS) ------------------------- */
+.nav-item.is-active {
+  background-color: var(--color-terracotta);
+  color: #ffffff;
+}
+
+.nav-item.is-active .nav-item__icon {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.nav-item.is-active:hover {
+  background-color: var(--color-terracotta-dark);
+}
+
+/*
+ * Khusus tombol avatar di topnav: gunakan warna teks charcoal
+ * (bukan putih seperti sidebar) karena latar topnav putih.
+ */
+#topnav .nav-item {
+  color: var(--color-charcoal);
+}
+
+#topnav .nav-item:hover {
+  background-color: #f3f4f6; /* gray-100 */
+}
+
+#topnav .nav-item.is-active {
+  background-color: #FDF0EC; /* terracotta-pale */
+  color: var(--color-terracotta);
+}
+
+
+/* ================================================================
+   6. DASH CARD — Kartu konten dashboard
+   Border tipis 1px, rounded corner 12px, soft shadow.
+================================================================ */
+.dash-card {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;    /* gray-200 */
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.dash-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #d1d5db;    /* gray-300 */
+}
+
+
+/* ================================================================
+   7. ALERT ROW — Baris peringatan polusi di panel Ringkasan
+================================================================ */
+.alert-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border-left: 3px solid transparent;
+}
+
+.alert-row__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+/* Warna per tingkat keparahan */
+.alert-row--critical {
+  background-color: #fef2f2;    /* red-50 */
+  border-left-color: #991b1b;   /* red-800 */
+}
+.alert-row--critical .alert-row__dot { background-color: #991b1b; }
+
+.alert-row--high {
+  background-color: #fff7ed;    /* orange-50 */
+  border-left-color: #ef4444;   /* red-500 */
+}
+.alert-row--high .alert-row__dot { background-color: #ef4444; }
+
+.alert-row--moderate {
+  background-color: #fffbeb;    /* amber-50 */
+  border-left-color: #f59e0b;   /* amber-500 */
+}
+.alert-row--moderate .alert-row__dot { background-color: #f59e0b; }
+
+
+/* ================================================================
+   8. ALERT BADGE — Label singkat di kanan baris peringatan
+================================================================ */
+.alert-badge {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  align-self: flex-start;
+}
+
+.alert-badge--critical { background-color: #991b1b; color: #ffffff; }
+.alert-badge--high     { background-color: #ef4444; color: #ffffff; }
+.alert-badge--moderate { background-color: #f59e0b; color: #ffffff; }
+
+
+/* ================================================================
+   9. SETTING BADGE — Label status pada panel Pengaturan
+================================================================ */
+.setting-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.setting-badge--on      { background-color: #d1fae5; color: #065f46; }  /* green */
+.setting-badge--off     { background-color: #fee2e2; color: #991b1b; }  /* red */
+.setting-badge--neutral { background-color: #f3f4f6; color: #374151; }  /* gray */
+
+
+/* ================================================================
+   10. SENSOR DOT — Animasi pulse pada indikator sensor aktif
+================================================================ */
+.sensor-dot {
+  /* Pulse menggunakan outline animasi CSS — tanpa @keyframes */
+  outline: 2px solid rgba(217, 93, 57, 0.3);
+  outline-offset: 2px;
+  animation: sensor-pulse 2s ease-in-out infinite;
+}
+
+@keyframes sensor-pulse {
+  0%, 100% { outline-color: rgba(217, 93, 57, 0.3); outline-offset: 2px; }
+  50%       { outline-color: rgba(217, 93, 57, 0.0); outline-offset: 5px; }
+}
+
+
+/* ================================================================
+   11. CONTENT PANEL — Fade-in saat panel berpindah
+================================================================ */
+.content-panel {
+  /* Panel yang terlihat muncul dengan animasi fade */
+  animation: panel-fadein 0.2s ease;
+}
+
+@keyframes panel-fadein {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+
+/* ================================================================
+   12. CUSTOM SCROLLBAR (Webkit)
+   Scrollbar halus selaras dengan palet warna.
+================================================================ */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background-color: #3E4C59;   /* charcoal-700 */
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-terracotta);
+}
+
+
+/* ================================================================
+   13. FILTER TAB — Tab kategori di panel Ringkasan
+   Tiga tab (Semua / Aktif / Perlu Perhatian) dengan angka count
+   yang ditampilkan langsung di dalam masing-masing tab.
+================================================================ */
+
+/* -- Tombol tab dasar ----------------------------------------- */
+.filter-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 0.8125rem;    /* 13px */
+  font-weight: 500;
+  color: #6b7280;           /* gray-500 */
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;      /* tumpuk di atas border-b container */
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.filter-tab:hover {
+  color: var(--color-charcoal);
+}
+
+/* -- Tab aktif: garis bawah terracotta + teks gelap ----------- */
+.filter-tab--active {
+  color: var(--color-charcoal);
+  font-weight: 600;
+  border-bottom-color: var(--color-terracotta);
+}
+
+/* -- Badge angka di dalam tab --------------------------------- */
+.filter-tab__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  border-radius: 9999px;
+  background-color: #f3f4f6;   /* gray-100 — default */
+  color: #6b7280;               /* gray-500 */
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Badge aktif: warna charcoal */
+.filter-tab--active .filter-tab__count {
+  background-color: #e5e7eb;   /* gray-200 */
+  color: var(--color-charcoal);
+}
+
+/* Badge "Perlu Perhatian": warna terracotta saat tab aktif */
+.filter-tab--active .filter-tab__count--alert {
+  background-color: rgba(217, 93, 57, 0.15);
+  color: var(--color-terracotta);
+}
+
+
+/* ================================================================
+   14. ICON SPIN — Animasi putar ikon refresh
+================================================================ */
+@keyframes spin-once {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.icon-spin {
+  animation: spin-once 0.7s ease-in-out;
+}
+
+
+/* ================================================================
+   15. NOTIFICATION DROPDOWN — Panel dropdown notifikasi ringkas
+================================================================ */
+.notif-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  width: 300px;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;    /* gray-200 */
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+/* Item notifikasi di dalam dropdown */
+.notif-dropdown__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 16px;
+  transition: background-color 0.15s ease;
+}
+
+.notif-dropdown__item:hover {
+  background-color: #f9fafb;   /* gray-50 */
+}
+
+/* Item belum dibaca: latar sedikit berwarna */
+.notif-dropdown__item--unread {
+  background-color: #fdf0ec;   /* terracotta-pale */
+}
+
+.notif-dropdown__item--unread:hover {
+  background-color: #fce4dc;
+}
+
+/* Dot warna di kiri item */
+.notif-dropdown__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.notif-dropdown__dot--critical { background-color: #991b1b; }
+.notif-dropdown__dot--high     { background-color: #ef4444; }
+.notif-dropdown__dot--moderate { background-color: #f59e0b; }
+
+
+/* ================================================================
+   16. STATION TABLE — Tabel stasiun pemantauan Kualitas Udara
+       Mencakup: toolbar search/filter, tabel data, state empty.
+================================================================ */
+
+/* -- Search input wrap --------------------------------------- */
+.station-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #f9fafb;   /* gray-50 */
+  border: 1px solid #e5e7eb;   /* gray-200 */
+  border-radius: 8px;
+  padding: 7px 12px;
+  min-width: 240px;
+  cursor: text;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.station-search-wrap:focus-within {
+  border-color: var(--color-terracotta);
+  box-shadow: 0 0 0 3px rgba(217, 93, 57, 0.12);
+  background-color: #ffffff;
+}
+
+.station-search-icon {
+  width: 15px;
+  height: 15px;
+  color: #9ca3af;   /* gray-400 */
+  flex-shrink: 0;
+}
+
+.station-search-input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.8125rem;   /* 13px */
+  color: var(--color-charcoal);
+  width: 100%;
+}
+
+.station-search-input::placeholder {
+  color: #9ca3af;   /* gray-400 */
+}
+
+
+/* -- Filter tabs (status kategori) --------------------------- */
+.station-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #6b7280;             /* gray-500 */
+  background-color: #f3f4f6;  /* gray-100 */
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease,
+              border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.station-tab:hover {
+  background-color: #e5e7eb;  /* gray-200 */
+  color: var(--color-charcoal);
+}
+
+.station-tab--active {
+  background-color: var(--color-charcoal);
+  color: #ffffff;
+  border-color: var(--color-charcoal);
+}
+
+.station-tab--active:hover {
+  background-color: #323F4B;  /* charcoal-800 */
+}
+
+/* Count badge di dalam tab */
+.station-tab__count {
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 9999px;
+  background-color: rgba(255,255,255,0.2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: background-color 0.15s ease;
+}
+
+.station-tab:not(.station-tab--active) .station-tab__count {
+  background-color: rgba(0,0,0,0.08);
+  color: #374151;
+}
+
+
+/* -- Tabel stasiun ------------------------------------------- */
+.station-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;   /* 13px */
+}
+
+.station-table thead tr {
+  background-color: #f9fafb;  /* gray-50 */
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.station-table th {
+  padding: 10px 16px;
+  font-size: 0.75rem;   /* 12px */
+  font-weight: 600;
+  color: #6b7280;        /* gray-500 */
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.station-table th.text-right,
+.station-table td.text-right {
+  text-align: right;
+}
+
+/* Baris tabel */
+.station-table tbody tr {
+  border-bottom: 1px solid #f3f4f6;  /* gray-100 */
+  transition: background-color 0.12s ease;
+}
+
+.station-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.station-table tbody tr:hover {
+  background-color: #fafafa;
+}
+
+.station-table td {
+  padding: 11px 16px;
+  color: var(--color-charcoal);
+  vertical-align: middle;
+}
+
+/* Nama stasiun — font lebih berat */
+.station-table .station-name {
+  font-weight: 600;
+}
+
+.station-table .station-region {
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+/* Nilai AQI — dicetak tebal dengan warna semantik */
+.station-aqi { font-weight: 700; }
+.station-aqi--baik         { color: #16a34a; }  /* green-600 */
+.station-aqi--moderat      { color: #d97706; }  /* amber-600 */
+.station-aqi--tidak-sehat  { color: #dc2626; }  /* red-600  */
+
+/* Badge status */
+.station-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.station-status-badge--baik {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.station-status-badge--moderat {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.station-status-badge--tidak-sehat {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+
+/* -- State kosong (tidak ada hasil filter/search) ------------ */
+.station-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.station-empty__icon {
+  width: 40px;
+  height: 40px;
+  color: #d1d5db;   /* gray-300 */
+  margin-bottom: 4px;
+}
+
+.station-empty__title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #374151;   /* gray-700 */
+}
+
+.station-empty__desc {
+  font-size: 0.8125rem;
+  color: #9ca3af;   /* gray-400 */
+  max-width: 280px;
+}

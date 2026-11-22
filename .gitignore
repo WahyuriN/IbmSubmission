@@ -1,0 +1,30 @@
+﻿# ============================================================
+# .gitignore -- Urban Air Quality & Mobility Dashboard
+# Proyek frontend statis (HTML + CSS + JS)
+# ============================================================
+
+# Editor dan IDE
+.vscode/
+.idea/
+*.suo
+*.user
+
+# OS artefak
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Log dan temp
+*.log
+npm-debug.log*
+
+# Dependency (jika nanti pakai npm)
+node_modules/
+
+# Build output (jika nanti pakai bundler)
+dist/
+build/
+
+# Environment
+.env
+.env.local
