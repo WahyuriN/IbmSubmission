@@ -247,95 +247,139 @@ window.addEventListener('scroll', updateTopnavShadow, { passive: true });
 
 /* ================================================================
    5. CATEGORY FILTER TABS — Tab Semua / Aktif / Perlu Perhatian
-   Menghitung jumlah item dari data DOM yang sudah ada di panel
-   Ringkasan, lalu menampilkannya di dalam masing-masing tab.
-   Tidak ada data baru — semua dihitung dari elemen yang ada.
+   Menghitung jumlah item dari DOM panel Ringkasan secara dinamis,
+   menampilkan angka di dalam tab, dan menyaring konten yang tampil
+   sesuai tab yang dipilih — tanpa reload halaman.
+
+   Definisi filter:
+     semua     → tampilkan semua blok (KPI grid + alert panel + target panel)
+     aktif     → tampilkan KPI grid + target panel; sembunyikan alert panel
+     perhatian → tampilkan alert panel + target panel; sembunyikan KPI grid
+
+   Count per tab:
+     semua     = KPI (4) + alert rows (3) + target items (4) = 11
+     aktif     = KPI (4) + target items yang BUKAN merah (3)  = 7
+     perhatian = alert rows (3) + target items merah (1)      = 4
 ================================================================ */
 
 /**
- * Menghitung jumlah item per kategori dari DOM panel Ringkasan.
- *
- * Definisi kategori:
- *   - Semua       : total seluruh metric item (KPI + alert + target)
- *   - Aktif       : KPI cards + target progress items (dipantau normal)
- *   - PerluPerhatian : alert rows aktif + target yang di bawah ambang (< 35%)
+ * Menghitung jumlah item per kategori langsung dari DOM.
  *
  * @returns {{ semua: number, aktif: number, perhatian: number }}
  */
 function countCategoryItems() {
-  // KPI cards: 4 kartu metrik utama (AQI, PM2.5, Kemacetan, EV).
-  // Dihitung dari jumlah .dash-card di dalam grid KPI (id unik via urutan child).
-  // Gunakan selector ID langsung agar tidak berbenturan dengan grid lain.
-  const kpiGrid   = document.querySelector('#panel-ringkasan .grid');
-  const kpiCount  = kpiGrid ? kpiGrid.querySelectorAll(':scope > .dash-card').length : 4;
+  // KPI cards — dihitung dari #kpi-grid (id spesifik, tidak ambigu)
+  const kpiGrid  = document.getElementById('kpi-grid');
+  const kpiCount = kpiGrid ? kpiGrid.querySelectorAll(':scope > .dash-card').length : 4;
 
-  // Alert rows (peringatan aktif) — setiap .alert-row adalah satu peringatan
-  const alertCount = document.querySelectorAll('#panel-ringkasan .alert-row').length;
+  // Alert rows — setiap .alert-row di #alert-panel adalah satu peringatan
+  const alertCount = document.querySelectorAll('#alert-panel .alert-row').length;
 
-  // Target progress items — setiap <li> di dalam .space-y-4 adalah satu target
-  const targetItems = document.querySelectorAll('#panel-ringkasan .space-y-4 > li');
+  // Target items — setiap <li> langsung di dalam #target-panel .space-y-4
+  const targetItems = document.querySelectorAll('#target-panel .space-y-4 > li');
   const targetCount = targetItems.length;
 
-  // "Perlu Perhatian" juga mencakup target yang progressnya sangat rendah (< 35%).
-  // Persentase dibaca dari elemen span dengan warna merah (font-bold text-red-*).
+  // Target "at-risk": item yang persentasenya ditandai merah (.text-red-600)
   let targetAtRiskCount = 0;
-  targetItems.forEach((item) => {
-    const pctEl = item.querySelector('.text-red-600');
-    if (pctEl) {
-      targetAtRiskCount += 1;
-    }
+  targetItems.forEach((li) => {
+    if (li.querySelector('.text-red-600')) targetAtRiskCount += 1;
   });
 
-  const semua     = kpiCount + alertCount + targetCount;
-  const aktif     = kpiCount + targetCount;
-  const perhatian = alertCount + targetAtRiskCount;
+  // "Aktif" = KPI + target yang TIDAK at-risk (sedang berjalan normal)
+  const targetOnTrackCount = targetCount - targetAtRiskCount;
 
-  return { semua, aktif, perhatian };
+  return {
+    semua:     kpiCount + alertCount + targetCount,
+    aktif:     kpiCount + targetOnTrackCount,
+    perhatian: alertCount + targetAtRiskCount,
+  };
 }
 
 /**
- * Memperbarui teks angka pada elemen count di dalam setiap tab.
+ * Menulis angka count ke elemen badge di dalam setiap tab.
  */
 function updateTabCounts() {
   const counts = countCategoryItems();
-  document.getElementById('count-semua').textContent    = counts.semua;
-  document.getElementById('count-aktif').textContent    = counts.aktif;
-  document.getElementById('count-perhatian').textContent = counts.perhatian;
+  const elSemua     = document.getElementById('count-semua');
+  const elAktif     = document.getElementById('count-aktif');
+  const elPerhatian = document.getElementById('count-perhatian');
+
+  if (elSemua)     elSemua.textContent     = counts.semua;
+  if (elAktif)     elAktif.textContent     = counts.aktif;
+  if (elPerhatian) elPerhatian.textContent = counts.perhatian;
 }
 
 /**
- * Mengatur tab yang aktif: memperbarui class, aria-selected,
- * dan border bawah sesuai tab yang diklik.
+ * Menyaring konten panel Ringkasan berdasarkan tab yang dipilih.
+ * Visibilitas dikontrol lewat class `filter-hidden` (tambah/hapus).
  *
- * @param {HTMLButtonElement} activeTab - Elemen tab yang dipilih
+ * Aturan visibilitas per filter:
+ *   semua     → semua blok tampil
+ *   aktif     → KPI grid + target panel tampil; alert panel tersembunyi
+ *   perhatian → alert panel + target panel tampil; KPI grid tersembunyi
+ *
+ * @param {string} filter — 'semua' | 'aktif' | 'perhatian'
  */
-function setActiveFilterTab(activeTab) {
-  const allTabs = document.querySelectorAll('.filter-tab');
+function applyRingkasanFilter(filter) {
+  const kpiGrid     = document.getElementById('kpi-grid');
+  const alertPanel  = document.getElementById('alert-panel');
+  const targetPanel = document.getElementById('target-panel');
 
-  allTabs.forEach((tab) => {
-    const isActive = tab === activeTab;
-    tab.classList.toggle('filter-tab--active', isActive);
-    tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+  if (!kpiGrid || !alertPanel || !targetPanel) return;
+
+  // Visibilitas berdasarkan nilai filter
+  const show = {
+    kpi:    filter === 'semua' || filter === 'aktif',
+    alert:  filter === 'semua' || filter === 'perhatian',
+    target: true,   // Target panel selalu tampil (relevan di semua filter)
+  };
+
+  kpiGrid.classList.toggle('filter-hidden', !show.kpi);
+  alertPanel.classList.toggle('filter-hidden', !show.alert);
+  targetPanel.classList.toggle('filter-hidden', !show.target);
+
+  // Saat tab "Perlu Perhatian", sorot item at-risk di target panel
+  const targetItems = document.querySelectorAll('#target-panel .space-y-4 > li');
+  targetItems.forEach((li) => {
+    const isAtRisk = !!li.querySelector('.text-red-600');
+    if (filter === 'perhatian') {
+      // Redup item yang tidak at-risk
+      li.classList.toggle('filter-dimmed', !isAtRisk);
+    } else {
+      li.classList.remove('filter-dimmed');
+    }
   });
 }
 
 /**
- * Inisialisasi tab filter: hitung count, tampilkan angka,
- * dan pasang event listener pada setiap tab.
- * Dipanggil sekali dari init() saat halaman dimuat.
+ * Mengatur tab aktif (kelas + aria) dan menerapkan filter konten.
+ *
+ * @param {HTMLButtonElement} clickedTab
+ */
+function setActiveFilterTab(clickedTab) {
+  document.querySelectorAll('.filter-tab').forEach((tab) => {
+    const isActive = tab === clickedTab;
+    tab.classList.toggle('filter-tab--active', isActive);
+    tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+  });
+
+  applyRingkasanFilter(clickedTab.dataset.filter);
+}
+
+/**
+ * Inisialisasi tab filter kategori panel Ringkasan.
+ * Dipanggil sekali dari init().
  */
 function initCategoryFilter() {
-  // Tampilkan angka count di dalam tab
+  // Hitung dan tampilkan angka count di tiap tab
   updateTabCounts();
 
+  // Render kondisi awal (tab "Semua" aktif → semua blok tampil)
+  applyRingkasanFilter('semua');
+
   // Pasang event listener pada tiap tombol tab
-  const filterTabs = document.querySelectorAll('.filter-tab');
-  filterTabs.forEach((tab) => {
-    tab.addEventListener('click', () => {
-      setActiveFilterTab(tab);
-      // Fungsi filter konten bisa ditambahkan di sini jika diperlukan
-      // misalnya: filterPanelContent(tab.dataset.filter);
-    });
+  document.querySelectorAll('.filter-tab').forEach((tab) => {
+    tab.addEventListener('click', () => setActiveFilterTab(tab));
   });
 }
 
@@ -427,15 +471,21 @@ function closeNotifPanel() {
 }
 
 /**
- * Membuka panel notifikasi dan menandai semua item sebagai "terlihat"
- * (badge jumlah hilang setelah panel dibuka).
+ * Membuka panel notifikasi.
+ * Badge disembunyikan saat panel dibuka — pengguna dianggap sudah melihat.
  */
 function openNotifPanel() {
   notifPanel.classList.remove('hidden');
   btnNotifikasi.setAttribute('aria-expanded', 'true');
 
-  // Sembunyikan badge saat panel dibuka (sudah dilihat)
+  // Sembunyikan badge saat panel dibuka (item sudah terlihat)
   if (notifBadge) notifBadge.classList.add('hidden');
+
+  // Update aria-label agar screen reader tahu badge sudah hilang
+  const label = unreadCount > 0
+    ? `Notifikasi — ${unreadCount} belum dibaca`
+    : 'Notifikasi — semua sudah dibaca';
+  btnNotifikasi.setAttribute('aria-label', label);
 }
 
 /**
@@ -452,25 +502,32 @@ function toggleNotifPanel() {
 
 /**
  * Menandai semua notifikasi sebagai sudah dibaca:
+ * - Set unreadCount ke 0
  * - Hapus highlight "unread" dari semua item
- * - Reset label dan sembunyikan badge
- * - Tutup panel setelah 300ms
+ * - Update label dan sembunyikan badge
+ * - Update aria-label tombol notifikasi
+ * - Tutup panel setelah jeda singkat
  */
 function markAllNotifRead() {
   unreadCount = 0;
 
-  // Hapus class unread dari semua item
+  // Hapus class unread dari semua item di panel
   notifPanel.querySelectorAll('.notif-dropdown__item--unread').forEach((item) => {
     item.classList.remove('notif-dropdown__item--unread');
   });
 
-  // Update label
+  // Update label di dalam panel dropdown
   if (notifUnreadLabel) notifUnreadLabel.textContent = 'Semua sudah dibaca';
 
-  // Sembunyikan badge
+  // Sembunyikan badge pada tombol
   if (notifBadge) notifBadge.classList.add('hidden');
 
-  // Tutup panel setelah jeda singkat
+  // Update aria-label tombol notifikasi
+  if (btnNotifikasi) {
+    btnNotifikasi.setAttribute('aria-label', 'Notifikasi — semua sudah dibaca');
+  }
+
+  // Tutup panel setelah jeda singkat agar pengguna bisa melihat perubahan
   setTimeout(closeNotifPanel, 400);
 }
 

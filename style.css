@@ -649,3 +649,23 @@
   color: #9ca3af;   /* gray-400 */
   max-width: 280px;
 }
+
+
+/* ================================================================
+   17. FILTER VISIBILITY — Kontrol tampil/sembunyi blok Ringkasan
+       .filter-hidden : menyembunyikan blok saat tab filter aktif
+       .filter-dimmed : meredup item yang tidak relevan dengan filter
+================================================================ */
+
+/* Sembunyikan blok sepenuhnya (dengan transisi halus) */
+.filter-hidden {
+  display: none !important;
+}
+
+/* Redup item yang tidak relevan — dipakai di tab "Perlu Perhatian"
+   untuk target yang sudah on-track */
+.filter-dimmed {
+  opacity: 0.35;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}

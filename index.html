@@ -417,8 +417,11 @@
           </button>
         </div>
 
-        <!-- Grid KPI Cards -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <!-- Grid KPI Cards
+             data-filter-group="aktif" → tampil di tab Semua & Aktif
+        -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+             id="kpi-grid" data-filter-group="aktif">
 
           <!-- KPI: AQI -->
           <div class="dash-card p-4">
@@ -501,8 +504,10 @@
         <!-- Dua panel berdampingan: Notifikasi + Target -->
         <div class="grid md:grid-cols-2 gap-4">
 
-          <!-- Panel: Peringatan Aktif -->
-          <div class="dash-card p-5">
+          <!-- Panel: Peringatan Aktif
+               data-filter-group="perhatian" → tampil di tab Semua & Perlu Perhatian
+          -->
+          <div class="dash-card p-5" id="alert-panel" data-filter-group="perhatian">
             <h3 class="text-sm font-bold text-charcoal mb-4 flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-terracotta"></span>
               Peringatan Aktif
@@ -535,8 +540,11 @@
             </ul>
           </div>
 
-          <!-- Panel: Target Emisi 2030 -->
-          <div class="dash-card p-5">
+          <!-- Panel: Target Emisi 2030
+               data-filter-group="aktif" → tampil di tab Semua & Aktif
+               (item at-risk di dalamnya juga ditampilkan saat tab Perlu Perhatian)
+          -->
+          <div class="dash-card p-5" id="target-panel" data-filter-group="aktif-perhatian">
             <h3 class="text-sm font-bold text-charcoal mb-4 flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-terracotta"></span>
               Target Emisi 2030
